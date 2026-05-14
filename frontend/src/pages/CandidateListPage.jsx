@@ -15,7 +15,7 @@
  */
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, RefreshCw, Star } from "lucide-react";
 import { listCandidates } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { Layout } from "@/components/Layout";
@@ -36,6 +36,12 @@ function SectionLabel({ children }) {
       {children}
     </p>
   );
+}
+
+/** Calculate average score from scores array */
+function getAverageScore(scores = []) {
+  if (scores.length === 0) return null;
+  return (scores.reduce((sum, s) => sum + s.score, 0) / scores.length).toFixed(1);
 }
 
 export default function CandidateListPage() {
@@ -183,6 +189,9 @@ export default function CandidateListPage() {
                 <th className="hidden px-4 py-3 text-left md:table-cell">
                   <SectionLabel>Skills</SectionLabel>
                 </th>
+                <th className="hidden px-4 py-3 text-left lg:table-cell">
+                  <SectionLabel>Avg score</SectionLabel>
+                </th>
                 <th className="px-4 py-3 text-left">
                   <SectionLabel>Status</SectionLabel>
                 </th>
@@ -216,6 +225,18 @@ export default function CandidateListPage() {
                         <span className="text-xs text-muted-foreground">+{c.skills.length - 3}</span>
                       )}
                     </div>
+                  </td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
+                    {getAverageScore(c.scores) ? (
+                      <div className="flex items-center gap-1.5">
+                        <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
+                        <span className="text-sm font-semibold tabular-nums text-foreground">
+                          {getAverageScore(c.scores)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={c.status} />

@@ -1,0 +1,30 @@
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+
+# SQLite DB (generated at runtime)
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

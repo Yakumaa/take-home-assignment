@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: techkraft_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source so changes reflect without rebuild during dev
+      - ./backend:/app
+      # Persist the SQLite database file on the host
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///./data/techkraft.db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: techkraft_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules   # anonymous volume prevents host overwriting container node_modules
+    env_file:
+      - .env
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped

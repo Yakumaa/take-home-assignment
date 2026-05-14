@@ -185,7 +185,7 @@ tests/test_api.py::test_unauthenticated_request_returns_403         PASSED
 
 ## Example API Calls
 
-A full Postman collection covering all endpoints is included in the repository:
+### A full Postman collection covering all endpoints is included in the repository:
 
 ```/postman/TechKraft_Take-home_Assignment_postman_collection.json```
 
@@ -197,7 +197,132 @@ Import it into Postman and set the following collection variables:
 | `admin_token` | *(paste token after login)*|
 | `reviewer_token` | *(paste token after login)*|
 
+### Curl Commands
 
+Set up shell variables once, then use them across all commands:
+ 
+```bash
+BASE="http://localhost:8000"
+ 
+# Get an admin token
+ADMIN_TOKEN=$(curl -s -X POST "$BASE/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@techkraft.com","password":"admin1234"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+ 
+# Get a reviewer token (register first if needed)
+curl -s -X POST "$BASE/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"reviewer@techkraft.com","password":"reviewer1234"}'
+ 
+REVIEWER_TOKEN=$(curl -s -X POST "$BASE/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"reviewer@techkraft.com","password":"reviewer1234"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+```
+ 
+### Health check
+ 
+```bash
+curl "$BASE/health"
+# {"status":"ok"}
+```
+ 
+### Create a candidate (admin only)
+ 
+```bash
+curl -s -X POST "$BASE/candidates" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Alice Smith",
+    "email": "alice@example.com",
+    "role_applied": "Backend Engineer",
+    "skills": ["Python", "FastAPI", "Docker"],
+    "internal_notes": "Referred by CTO."
+  }' | python3 -m json.tool
+```
+ 
+### List candidates with filters and pagination
+ 
+```bash
+# All candidates, page 1
+curl -s "$BASE/candidates?page=1&page_size=10" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" | python3 -m json.tool
+ 
+# Filter by status and skill
+curl -s "$BASE/candidates?status=new&skill=Python" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" | python3 -m json.tool
+ 
+# Keyword search
+curl -s "$BASE/candidates?keyword=Alice" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" | python3 -m json.tool
+```
+ 
+### Get candidate detail
+ 
+```bash
+# Reviewer — no internal_notes, only own scores
+curl -s "$BASE/candidates/1" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" | python3 -m json.tool
+ 
+# Admin — includes internal_notes and all scores
+curl -s "$BASE/candidates/1" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | python3 -m json.tool
+```
+ 
+### Submit a score
+ 
+```bash
+curl -s -X POST "$BASE/candidates/1/scores" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"category":"Technical","score":4,"note":"Strong system design answers."}' \
+  | python3 -m json.tool
+```
+ 
+### Trigger AI summary (2-second simulated delay)
+ 
+```bash
+curl -s -X POST "$BASE/candidates/1/summary" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | python3 -m json.tool
+```
+ 
+### Update candidate status
+ 
+```bash
+# Reviewer can update status
+curl -s -X PATCH "$BASE/candidates/1" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"reviewed"}' | python3 -m json.tool
+ 
+# Admin can also update internal_notes
+curl -s -X PATCH "$BASE/candidates/1" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"hired","internal_notes":"Offer sent. Start date June 1."}' \
+  | python3 -m json.tool
+```
+ 
+### Soft delete a candidate (admin only)
+ 
+```bash
+curl -s -X DELETE "$BASE/candidates/1" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+# {"detail":"Candidate 1 archived successfully"}
+ 
+# Subsequent GET returns 404 — candidate is hidden but row still exists in DB
+curl -s "$BASE/candidates/1" -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+ 
+### SSE stream (stretch goal)
+ 
+```bash
+# Streams score updates for candidate 1 in real time (~60s window)
+curl -N "$BASE/candidates/1/stream" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN"
+```
 ---
 
 ## Debugging Challenge

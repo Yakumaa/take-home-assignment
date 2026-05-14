@@ -25,11 +25,7 @@ from app.schemas import (
     ScoreResponse,
 )
 
-
-# ---------------------------------------------------------------------------
 # Candidate CRUD
-# ---------------------------------------------------------------------------
-
 def create_candidate(db: Session, payload: CandidateCreate) -> Candidate:
     """Create a new candidate. Only admins should call this via the router."""
     existing = db.query(Candidate).filter(Candidate.email == payload.email).first()
@@ -178,11 +174,7 @@ def soft_delete_candidate(db: Session, candidate_id: int) -> dict:
     db.commit()
     return {"detail": f"Candidate {candidate_id} archived successfully"}
 
-
-# ---------------------------------------------------------------------------
 # Scores
-# ---------------------------------------------------------------------------
-
 def submit_score(
     db: Session,
     candidate_id: int,
@@ -207,11 +199,7 @@ def submit_score(
     db.refresh(score)
     return ScoreResponse.model_validate(score)
 
-
-# ---------------------------------------------------------------------------
 # AI Summary (mock)
-# ---------------------------------------------------------------------------
-
 def save_ai_summary(db: Session, candidate_id: int, summary: str) -> Candidate:
     """Persist the generated AI summary string to the candidate record."""
     candidate = _get_active_candidate_or_404(db, candidate_id)
@@ -220,11 +208,7 @@ def save_ai_summary(db: Session, candidate_id: int, summary: str) -> Candidate:
     db.refresh(candidate)
     return candidate
 
-
-# ---------------------------------------------------------------------------
 # Internal helpers
-# ---------------------------------------------------------------------------
-
 def _get_active_candidate_or_404(db: Session, candidate_id: int) -> Candidate:
     """Fetch a non-deleted candidate by id, or raise 404."""
     candidate = (

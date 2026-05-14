@@ -45,11 +45,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 class Base(DeclarativeBase):
     pass
 
-
-# ---------------------------------------------------------------------------
 # User
-# ---------------------------------------------------------------------------
-
 class User(Base):
     __tablename__ = "users"
 
@@ -70,11 +66,7 @@ class User(Base):
     # Relationships
     scores = relationship("Score", back_populates="reviewer", lazy="select")
 
-
-# ---------------------------------------------------------------------------
 # Candidate
-# ---------------------------------------------------------------------------
-
 class Candidate(Base):
     __tablename__ = "candidates"
 
@@ -118,11 +110,7 @@ class Candidate(Base):
         Index("ix_candidates_active", "deleted_at", "status"),
     )
 
-
-# ---------------------------------------------------------------------------
 # Score
-# ---------------------------------------------------------------------------
-
 class Score(Base):
     __tablename__ = "scores"
 
@@ -154,11 +142,7 @@ class Score(Base):
         Index("ix_scores_reviewer_id", "reviewer_id"),
     )
 
-
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
-
 def get_db():
     """
     FastAPI dependency that yields a DB session and guarantees cleanup.

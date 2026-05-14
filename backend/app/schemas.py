@@ -15,10 +15,7 @@ from typing import Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-# ---------------------------------------------------------------------------
 # Auth schemas
-# ---------------------------------------------------------------------------
-
 class UserCreate(BaseModel):
     """
     Registration payload.
@@ -29,7 +26,6 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
 
-
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
@@ -38,32 +34,24 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
-
 
 class TokenData(BaseModel):
     """Decoded JWT payload stored in the token."""
     user_id: int
     role: str
 
-
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-
-# ---------------------------------------------------------------------------
 # Score schemas
-# ---------------------------------------------------------------------------
-
 class ScoreCreate(BaseModel):
     category: str = Field(..., min_length=1, max_length=100)
     score: float = Field(..., ge=1, le=5, description="Score between 1 and 5 inclusive")
     note: Optional[str] = Field(None, max_length=2000)
-
 
 class ScoreResponse(BaseModel):
     id: int
@@ -76,18 +64,13 @@ class ScoreResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ---------------------------------------------------------------------------
 # Candidate schemas
-# ---------------------------------------------------------------------------
-
 class CandidateCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     email: EmailStr
     role_applied: str = Field(..., min_length=1, max_length=255)
     skills: List[str] = Field(default_factory=list)
     internal_notes: Optional[str] = None
-
 
 class CandidateStatusUpdate(BaseModel):
     """Used by admin to update status or internal_notes."""
@@ -97,7 +80,6 @@ class CandidateStatusUpdate(BaseModel):
         description="Cannot be set to 'archived' via this endpoint — use DELETE instead",
     )
     internal_notes: Optional[str] = None
-
 
 class CandidateResponse(BaseModel):
     """
@@ -116,14 +98,12 @@ class CandidateResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
 class CandidateAdminResponse(CandidateResponse):
     """
     Admin-only response — extends CandidateResponse with internal_notes.
     The router decides which schema to use based on the current user's role.
     """
     internal_notes: Optional[str]
-
 
 class CandidateSummary(BaseModel):
     """Lightweight representation for the list endpoint (no scores)."""
@@ -137,23 +117,14 @@ class CandidateSummary(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ---------------------------------------------------------------------------
 # AI Summary schema
-# ---------------------------------------------------------------------------
-
 class SummaryResponse(BaseModel):
     candidate_id: int
     ai_summary: str
     generated_at: datetime
 
-
-# ---------------------------------------------------------------------------
 # Pagination wrapper
-# ---------------------------------------------------------------------------
-
 T = TypeVar("T")
-
 
 class PaginatedResponse(BaseModel, Generic[T]):
     """Generic paginated envelope used by list endpoints."""

@@ -1,4 +1,3 @@
-# app/main.py  — populated in Phase 2
 """
 main.py — FastAPI application factory.
 
@@ -18,9 +17,7 @@ from app.models import create_tables
 from app.routers import auth as auth_router
 from app.routers import candidates as candidates_router
 
-# ---------------------------------------------------------------------------
 # App factory
-# ---------------------------------------------------------------------------
 
 # app = FastAPI(
 #     title="TechKraft Recruitment Dashboard API",
@@ -54,9 +51,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ---------------------------------------------------------------------------
 # CORS
-# ---------------------------------------------------------------------------
 # In production, replace "*" with the specific frontend origin.
 app.add_middleware(
     CORSMiddleware,
@@ -66,17 +61,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
 # Routers
-# ---------------------------------------------------------------------------
 
 app.include_router(auth_router.router)
 app.include_router(candidates_router.router)
 
-# ---------------------------------------------------------------------------
 # Startup event — create tables
-# ---------------------------------------------------------------------------
-
 # @app.on_event("startup")
 # def on_startup():
 #     """
@@ -85,10 +75,7 @@ app.include_router(candidates_router.router)
 #     """
 #     create_tables()
 
-# ---------------------------------------------------------------------------
 # Health check
-# ---------------------------------------------------------------------------
-
 @app.get("/health", tags=["meta"])
 def health_check():
     """Simple liveness probe used by Docker and load balancers."""

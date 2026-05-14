@@ -23,33 +23,21 @@ from app.schemas import TokenData
 
 load_dotenv()
 
-# ---------------------------------------------------------------------------
 # Config
-# ---------------------------------------------------------------------------
-
 SECRET_KEY: str = os.getenv("SECRET_KEY", "insecure-default-key-change-in-production")
 ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
-# ---------------------------------------------------------------------------
 # Password hashing
-# ---------------------------------------------------------------------------
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-
-# ---------------------------------------------------------------------------
 # JWT helpers
-# ---------------------------------------------------------------------------
-
 def create_access_token(user_id: int, role: str) -> str:
     """
     Issue a signed JWT containing the user's id and role.
@@ -82,19 +70,11 @@ def decode_token(token: str) -> TokenData:
     except JWTError:
         raise credentials_exception
 
-
-# ---------------------------------------------------------------------------
 # FastAPI security scheme
-# ---------------------------------------------------------------------------
-
 # HTTPBearer extracts the token from "Authorization: Bearer <token>" header
 bearer_scheme = HTTPBearer()
 
-
-# ---------------------------------------------------------------------------
 # Reusable dependencies
-# ---------------------------------------------------------------------------
-
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),

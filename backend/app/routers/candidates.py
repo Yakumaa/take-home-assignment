@@ -38,11 +38,7 @@ from app.services import candidate_service as svc
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
 
-
-# ---------------------------------------------------------------------------
 # List candidates
-# ---------------------------------------------------------------------------
-
 @router.get(
     "",
     response_model=PaginatedResponse,
@@ -69,11 +65,7 @@ def list_candidates(
         page_size=page_size,
     )
 
-
-# ---------------------------------------------------------------------------
 # Create candidate (admin only)
-# ---------------------------------------------------------------------------
-
 @router.post(
     "",
     response_model=CandidateAdminResponse,
@@ -88,11 +80,7 @@ def create_candidate(
     candidate = svc.create_candidate(db, payload)
     return svc.get_candidate_detail(db, candidate.id, current_user)
 
-
-# ---------------------------------------------------------------------------
 # Get candidate detail
-# ---------------------------------------------------------------------------
-
 @router.get(
     "/{candidate_id}",
     response_model=Union[CandidateAdminResponse, CandidateResponse],
@@ -105,11 +93,7 @@ def get_candidate(
 ):
     return svc.get_candidate_detail(db, candidate_id, current_user)
 
-
-# ---------------------------------------------------------------------------
 # Update candidate (status / internal_notes)
-# ---------------------------------------------------------------------------
-
 @router.patch(
     "/{candidate_id}",
     response_model=Union[CandidateAdminResponse, CandidateResponse],
@@ -124,11 +108,7 @@ def update_candidate(
     svc.update_candidate(db, candidate_id, payload, current_user)
     return svc.get_candidate_detail(db, candidate_id, current_user)
 
-
-# ---------------------------------------------------------------------------
 # Soft delete candidate (admin only)
-# ---------------------------------------------------------------------------
-
 @router.delete(
     "/{candidate_id}",
     summary="Soft-delete a candidate (sets status=archived, never hard deletes)",
@@ -144,11 +124,7 @@ def delete_candidate(
     """
     return svc.soft_delete_candidate(db, candidate_id)
 
-
-# ---------------------------------------------------------------------------
 # Submit score
-# ---------------------------------------------------------------------------
-
 @router.post(
     "/{candidate_id}/scores",
     response_model=ScoreResponse,
@@ -163,11 +139,7 @@ def submit_score(
 ):
     return svc.submit_score(db, candidate_id, payload, current_user)
 
-
-# ---------------------------------------------------------------------------
 # Mock AI summary  (async — simulates LLM latency)
-# ---------------------------------------------------------------------------
-
 @router.post(
     "/{candidate_id}/summary",
     response_model=SummaryResponse,
@@ -192,9 +164,8 @@ async def generate_summary(
     # Verify candidate exists before sleeping (fail fast)
     candidate = svc._get_active_candidate_or_404(db, candidate_id)
 
-    # ── Simulate async LLM call ──────────────────────────────────────────
+    # Simulate async LLM call 
     await asyncio.sleep(2)
-    # ─────────────────────────────────────────────────────────────────────
 
     scores = candidate.scores
     avg_score = (
@@ -223,11 +194,7 @@ async def generate_summary(
         generated_at=generated_at,
     )
 
-
-# ---------------------------------------------------------------------------
 # Stretch goal: SSE stream of score updates
-# ---------------------------------------------------------------------------
-
 @router.get(
     "/{candidate_id}/stream",
     summary="[Stretch] SSE stream of real-time score updates for a candidate",

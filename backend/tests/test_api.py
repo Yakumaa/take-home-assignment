@@ -29,10 +29,7 @@ from app.auth import get_password_hash
 from app.main import app
 from app.models import Base, User, get_db
 
-# ---------------------------------------------------------------------------
 # Test database setup — in-memory SQLite, isolated per test session
-# ---------------------------------------------------------------------------
-
 TEST_DATABASE_URL = "sqlite://"
 
 test_engine = create_engine(
@@ -42,7 +39,6 @@ test_engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
-
 def override_get_db():
     """Dependency override: yield a session connected to the in-memory DB."""
     db = TestingSessionLocal()
@@ -51,10 +47,8 @@ def override_get_db():
     finally:
         db.close()
 
-
 # Apply the override before any test runs
 app.dependency_overrides[get_db] = override_get_db
-
 
 @pytest.fixture(autouse=True)
 def reset_db():
@@ -72,11 +66,7 @@ def client():
     """Return a synchronous TestClient wrapping the FastAPI app."""
     return TestClient(app)
 
-
-# ---------------------------------------------------------------------------
 # Helper: seed users directly into the DB (bypasses HTTP layer)
-# ---------------------------------------------------------------------------
-
 def _seed_user(email: str, password: str, role: str) -> User:
     """Insert a user directly into the test DB and return the ORM object."""
     db = TestingSessionLocal()
@@ -103,22 +93,14 @@ def _auth(token: str) -> dict:
     """Return an Authorization header dict for use in requests."""
     return {"Authorization": f"Bearer {token}"}
 
-
-# ---------------------------------------------------------------------------
 # 1. Health check
-# ---------------------------------------------------------------------------
-
 def test_health_check(client):
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
 
-
-# ---------------------------------------------------------------------------
 # 2. Registration hardcodes role=reviewer
 #    CRITICAL: Even if the client sends {"role": "admin"}, it must be ignored.
-# ---------------------------------------------------------------------------
-
 def test_registration_always_assigns_reviewer_role(client):
     # Attempt to register with an explicit admin role in the payload
     payload = {
@@ -143,11 +125,7 @@ def test_registration_duplicate_email_returns_409(client):
     resp = client.post("/auth/register", json=payload)
     assert resp.status_code == 409
 
-
-# ---------------------------------------------------------------------------
 # 3. Login returns a JWT
-# ---------------------------------------------------------------------------
-
 def test_login_returns_token(client):
     _seed_user("reviewer@example.com", "password123", "reviewer")
     resp = client.post(
@@ -168,11 +146,7 @@ def test_login_wrong_password_returns_401(client):
     )
     assert resp.status_code == 401
 
-
-# ---------------------------------------------------------------------------
 # 4. Admin can create a candidate
-# ---------------------------------------------------------------------------
-
 def test_admin_can_create_candidate(client):
     _seed_user("admin@example.com", "password123", "admin")
     token = _login(client, "admin@example.com", "password123")
@@ -212,11 +186,7 @@ def test_reviewer_cannot_create_candidate(client):
     )
     assert resp.status_code == 403
 
-
-# ---------------------------------------------------------------------------
 # 5. Reviewer CANNOT see another reviewer's scores (core RBAC requirement)
-# ---------------------------------------------------------------------------
-
 def test_reviewer_cannot_see_other_reviewers_scores(client):
     """
     Scenario:
@@ -267,11 +237,7 @@ def test_reviewer_cannot_see_other_reviewers_scores(client):
         f"RBAC VIOLATION: Reviewer B can see Reviewer A's scores: {scores}"
     )
 
-
-# ---------------------------------------------------------------------------
 # 6. Reviewer cannot see internal_notes
-# ---------------------------------------------------------------------------
-
 def test_reviewer_cannot_see_internal_notes(client):
     _seed_user("admin@example.com", "password123", "admin")
     _seed_user("reviewer@example.com", "password123", "reviewer")
@@ -304,11 +270,7 @@ def test_reviewer_cannot_see_internal_notes(client):
         "RBAC VIOLATION: internal_notes exposed to reviewer role"
     )
 
-
-# ---------------------------------------------------------------------------
 # 7. Soft delete — candidate is archived, not hard-deleted
-# ---------------------------------------------------------------------------
-
 def test_soft_delete_archives_candidate(client):
     _seed_user("admin@example.com", "password123", "admin")
     admin_token = _login(client, "admin@example.com", "password123")
@@ -345,11 +307,7 @@ def test_soft_delete_archives_candidate(client):
     assert row.deleted_at is not None, "deleted_at should be set after soft delete"
     assert row.status == "archived", f"Expected status='archived', got '{row.status}'"
 
-
-# ---------------------------------------------------------------------------
 # 8. Pagination is respected
-# ---------------------------------------------------------------------------
-
 def test_pagination_limits_results(client):
     _seed_user("admin@example.com", "password123", "admin")
     admin_token = _login(client, "admin@example.com", "password123")
@@ -381,11 +339,7 @@ def test_pagination_limits_results(client):
     assert resp2.status_code == 200
     assert len(resp2.json()["items"]) == 1
 
-
-# ---------------------------------------------------------------------------
 # 9. Unauthenticated requests are rejected
-# ---------------------------------------------------------------------------
-
 def test_unauthenticated_request_returns_403(client):
     # No Authorization header
     resp = client.get("/candidates")

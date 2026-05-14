@@ -84,7 +84,8 @@ cd take-home-assignment
 cp .env.example .env
 ```
 
-Open `.env` and set a strong `SECRET_KEY`. All other defaults work as-is for local development.
+Open `.env` and set a strong `SECRET_KEY` using `python -c "import secrets; print(secrets.token_urlsafe(50))"`
+. All other defaults work as-is for local development.
 
 ### 2. Start both services
 
@@ -109,7 +110,7 @@ docker compose logs -f   # tail logs
 
 The registration endpoint always creates `reviewer` accounts (by design). Seed an admin directly:
 
-```bash
+<!-- ```bash
 docker compose exec backend python - <<'EOF'
 from app.models import SessionLocal, create_tables
 from app.auth import get_password_hash
@@ -129,6 +130,14 @@ else:
     print("Admin already exists.")
 db.close()
 EOF
+``` -->
+
+```bash
+docker compose exec backend python -c "from app.models import SessionLocal, User, create_tables; from app.auth import get_password_hash; create_tables(); db = SessionLocal(); existing = db.query(User).filter(User.email == 'admin@techkraft.com').first(); 
+if not existing: 
+    admin = User(email='admin@techkraft.com', hashed_password=get_password_hash('admin1234'), role='admin'); db.add(admin); db.commit(); print('Admin created.') 
+else: 
+    print('Admin already exists.'); db.close()"
 ```
 
 ### 4. Open the app

@@ -290,24 +290,13 @@ export default function CandidateDetailPage() {
               {candidate.name}
             </h1>
             <StatusBadge status={candidate.status} />
-            {avgScore && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
-                <Star size={11} className="fill-amber-400 text-amber-400" />
-                {avgScore} / 5
-              </span>
-            )}
           </div>
 
-          {/* Subheading: email · role · date */}
+          {/* Subheading: email only — role and date live in the Profile stats grid below */}
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Mail size={11} />
               {candidate.email}
-            </span>
-            <span className="text-slate-300">·</span>
-            <span className="flex items-center gap-1">
-              <Briefcase size={11} />
-              {candidate.role_applied}
             </span>
             <span className="text-slate-300">·</span>
             <span className="flex items-center gap-1">
@@ -332,25 +321,48 @@ export default function CandidateDetailPage() {
               </CardHeader>
               <CardContent className="space-y-5 px-5 py-4">
 
-                {/* Stats grid: role | scores | added */}
-                <div className="grid grid-cols-3 gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
+                {/* Stats grid: avg score | scores submitted | role applied | date added
+                    Role and date are the canonical source here; the header only shows email. */}
+                <div className="grid grid-cols-3 gap-x-6 gap-y-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
+                  {/* Role applied */}
                   <StatCell
                     icon={Briefcase}
                     label="Role applied"
                     value={candidate.role_applied}
                   />
+
+                  {/* Date added */}
+                  {/* <StatCell
+                    icon={Calendar}
+                    label="Date added"
+                    value={formattedDate}
+                  /> */}
+
+                  {/* Avg score — coloured to match ScoreBar chip palette */}
+                  <div className="flex flex-col gap-0.5">
+                    <SectionLabel>Avg score</SectionLabel>
+                    {avgScore ? (
+                      <div className="flex items-center gap-1.5">
+                        <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
+                        <span className="text-sm font-semibold tabular-nums text-foreground">
+                          {avgScore}
+                        </span>
+                        <span className="text-xs text-muted-foreground">/ 5</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No scores yet</span>
+                    )}
+                  </div>
+
+                  {/* Scores submitted */}
                   <StatCell
                     icon={BarChart2}
                     label="Scores submitted"
-                    value={candidate.scores.length === 0
-                      ? "None yet"
-                      : `${candidate.scores.length} score${candidate.scores.length > 1 ? "s" : ""}`
+                    value={
+                      candidate.scores.length === 0
+                        ? "None yet"
+                        : `${candidate.scores.length} score${candidate.scores.length !== 1 ? "s" : ""}`
                     }
-                  />
-                  <StatCell
-                    icon={Calendar}
-                    label="Added"
-                    value={formattedDate}
                   />
                 </div>
 

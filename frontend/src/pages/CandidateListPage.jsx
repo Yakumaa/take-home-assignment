@@ -6,6 +6,12 @@
  *  - Offset-based pagination (page + page_size, default 20, max 50)
  *  - Click a row → navigate to /candidates/:id
  *  - Admin sees "New Candidate" button
+ *
+ * Design: Premium high-density internal tool (Linear / Vercel aesthetic).
+ *  - Standalone page header for strong visual hierarchy
+ *  - Refined table with hover states and semantic spacing
+ *  - Filter bar with consistent Input/Select styling
+ *  - Status badges use the premium color-coded design
  */
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +28,15 @@ import { Select } from "@/components/ui/primitives";
 const PAGE_SIZE = 20;
 
 const STATUS_OPTIONS = ["", "new", "reviewed", "hired", "rejected"];
+
+/** Micro section label — uppercase, wide-tracked, muted. */
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+      {children}
+    </p>
+  );
+}
 
 export default function CandidateListPage() {
   const { user } = useAuth();
@@ -89,31 +104,29 @@ export default function CandidateListPage() {
 
   return (
     <Layout>
-      {/* ── Page header ── */}
-      <div className="mb-5 flex items-center justify-between">
+      {/* ── Page header — standalone for strong visual hierarchy ── */}
+      <div className="mb-6 flex items-baseline justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Candidates</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Candidates</h1>
           {data && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {data.total} total
-            </p>
+            <SectionLabel className="mt-1">{data.total} total</SectionLabel>
           )}
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={() => navigate("/candidates/new")} className="gap-1.5">
+          <Button size="sm" onClick={() => navigate("/candidates/new")} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700">
             <Plus size={14} /> New Candidate
           </Button>
         )}
       </div>
 
-      {/* ── Filter bar ── */}
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* ── Filter bar — refined with consistent styling ── */}
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {/* Keyword search */}
         <div className="relative sm:col-span-2">
-          <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Search size={14} className="absolute left-3 top-3 text-muted-foreground" />
           <Input
             placeholder="Search name, email, role…"
-            className="pl-8"
+            className="pl-9 border-slate-200 focus-visible:ring-indigo-500/20"
             value={filters.keyword}
             onChange={(e) => handleFilterChange("keyword", e.target.value)}
           />
@@ -123,6 +136,7 @@ export default function CandidateListPage() {
         <Select
           value={filters.status}
           onChange={(e) => handleFilterChange("status", e.target.value)}
+          className="border-slate-200 focus-visible:ring-indigo-500/20"
         >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.filter(Boolean).map((s) => (
@@ -133,13 +147,14 @@ export default function CandidateListPage() {
         {/* Skill filter */}
         <Input
           placeholder="Filter by skill…"
+          className="border-slate-200 focus-visible:ring-indigo-500/20"
           value={filters.skill}
           onChange={(e) => handleFilterChange("skill", e.target.value)}
         />
       </div>
 
-      {/* ── Table ── */}
-      <div className="rounded-lg border bg-card">
+      {/* ── Table — premium design with refined hover states ── */}
+      <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
         {loading ? (
           <div className="flex h-48 items-center justify-center gap-2 text-muted-foreground text-sm">
             <Spinner size={18} /> Loading candidates…
@@ -158,32 +173,42 @@ export default function CandidateListPage() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Name</th>
-                <th className="hidden px-4 py-2.5 text-left text-xs font-medium text-muted-foreground sm:table-cell">Role applied</th>
-                <th className="hidden px-4 py-2.5 text-left text-xs font-medium text-muted-foreground md:table-cell">Skills</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Status</th>
-                <th className="hidden px-4 py-2.5 text-left text-xs font-medium text-muted-foreground lg:table-cell">Added</th>
+              <tr className="border-b border-slate-200 bg-slate-50/50">
+                <th className="px-4 py-3 text-left">
+                  <SectionLabel>Name</SectionLabel>
+                </th>
+                <th className="hidden px-4 py-3 text-left sm:table-cell">
+                  <SectionLabel>Role applied</SectionLabel>
+                </th>
+                <th className="hidden px-4 py-3 text-left md:table-cell">
+                  <SectionLabel>Skills</SectionLabel>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <SectionLabel>Status</SectionLabel>
+                </th>
+                <th className="hidden px-4 py-3 text-left lg:table-cell">
+                  <SectionLabel>Added</SectionLabel>
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-200">
               {data.items.map((c) => (
                 <tr
                   key={c.id}
                   onClick={() => navigate(`/candidates/${c.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-muted/30"
+                  className="cursor-pointer transition-colors hover:bg-slate-50/50"
                 >
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{c.name}</p>
                     <p className="text-xs text-muted-foreground">{c.email}</p>
                   </td>
-                  <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                  <td className="hidden px-4 py-3 text-sm text-foreground sm:table-cell">
                     {c.role_applied}
                   </td>
                   <td className="hidden px-4 py-3 md:table-cell">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {c.skills.slice(0, 3).map((s) => (
-                        <span key={s} className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                        <span key={s} className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
                           {s}
                         </span>
                       ))}
@@ -205,19 +230,19 @@ export default function CandidateListPage() {
         )}
       </div>
 
-      {/* ── Pagination ── */}
+      {/* ── Pagination — refined spacing and visual hierarchy ── */}
       {data && totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-5 flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Page {page} of {totalPages} — {data.total} candidates
+            Page {page} of {totalPages} · {data.total} candidates
           </p>
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1 || loading}
-              className="h-8 gap-1"
+              className="h-8 gap-1 border-slate-200 hover:bg-slate-50"
             >
               <ChevronLeft size={14} /> Prev
             </Button>
@@ -226,7 +251,7 @@ export default function CandidateListPage() {
               size="sm"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages || loading}
-              className="h-8 gap-1"
+              className="h-8 gap-1 border-slate-200 hover:bg-slate-50"
             >
               Next <ChevronRight size={14} />
             </Button>

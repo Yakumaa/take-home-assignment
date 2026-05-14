@@ -12,21 +12,21 @@
  *
  * On success: redirect to / (Candidate List).
  * On error: surface the API message inline.
+ *
+ * Design: Premium high-density internal tool (Linear / Vercel aesthetic).
+ *  - Wrapped in Layout component for consistent navbar
+ *  - Refined form styling with consistent input borders
+ *  - Micro section labels for visual hierarchy
  */
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { createCandidate } from "@/api/client";
+import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/primitives";
+import { Textarea } from "@/components/ui/input";
 import { Spinner } from "@/components/StatusBadge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 
 // Common roles — keeps the field consistent without being restrictive
 const ROLE_SUGGESTIONS = [
@@ -39,6 +39,15 @@ const ROLE_SUGGESTIONS = [
   "QA Engineer",
   "Design Engineer",
 ];
+
+/** Micro section label — uppercase, wide-tracked, muted. */
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+      {children}
+    </p>
+  );
+}
 
 /**
  * Parse a raw comma-separated skills string into a clean string array.
@@ -99,38 +108,38 @@ export default function NewCandidatePage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-xl px-4 py-10">
+    <Layout>
+      <div className="mx-auto max-w-2xl">
 
-      {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
-        <Link to="/" className="hover:text-foreground transition-colors">
-          Candidates
-        </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">New Candidate</span>
-      </nav>
+        {/* Page header — standalone for strong visual hierarchy */}
+        <div className="mb-6">
+          <div className="mb-4">
+            <Link 
+              to="/" 
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to candidates
+            </Link>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Add candidate</h1>
+          <SectionLabel className="mt-2">
+            New candidates are created with status <span className="text-foreground font-medium">new</span> and can be scored immediately.
+          </SectionLabel>
+        </div>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle>Add candidate</CardTitle>
-          <CardDescription>
-            New candidates are created with status{" "}
-            <span className="font-medium text-foreground">new</span> and can be
-            scored immediately.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
+        {/* Form card — refined styling */}
+        <div className="rounded-lg border border-slate-200 bg-card p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {/* Name */}
             <div className="space-y-1.5">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name" className="text-sm font-medium">Full name</Label>
               <Input
                 id="name"
                 type="text"
                 placeholder="Jane Smith"
                 autoComplete="name"
+                className="border-slate-200 focus-visible:ring-indigo-500/20"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -139,12 +148,13 @@ export default function NewCandidatePage() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="jane@example.com"
                 autoComplete="off"
+                className="border-slate-200 focus-visible:ring-indigo-500/20"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -153,12 +163,13 @@ export default function NewCandidatePage() {
 
             {/* Role applied — free-text with datalist suggestions */}
             <div className="space-y-1.5">
-              <Label htmlFor="role_applied">Role applied for</Label>
+              <Label htmlFor="role_applied" className="text-sm font-medium">Role applied for</Label>
               <Input
                 id="role_applied"
                 type="text"
                 placeholder="e.g. Full Stack Engineer"
                 list="role-suggestions"
+                className="border-slate-200 focus-visible:ring-indigo-500/20"
                 value={roleApplied}
                 onChange={(e) => setRoleApplied(e.target.value)}
                 required
@@ -173,7 +184,7 @@ export default function NewCandidatePage() {
 
             {/* Skills — comma-separated with live tag preview */}
             <div className="space-y-1.5">
-              <Label htmlFor="skills">
+              <Label htmlFor="skills" className="text-sm font-medium">
                 Skills{" "}
                 <span className="font-normal text-muted-foreground">
                   (comma-separated)
@@ -183,6 +194,7 @@ export default function NewCandidatePage() {
                 id="skills"
                 type="text"
                 placeholder="React, Node.js, PostgreSQL, Docker"
+                className="border-slate-200 focus-visible:ring-indigo-500/20"
                 value={skillsRaw}
                 onChange={(e) => setSkillsRaw(e.target.value)}
                 required
@@ -194,7 +206,7 @@ export default function NewCandidatePage() {
                   {skillTags.map((skill) => (
                     <span
                       key={skill}
-                      className="inline-flex items-center rounded-full border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                      className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
                     >
                       {skill}
                     </span>
@@ -211,8 +223,12 @@ export default function NewCandidatePage() {
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-1">
-              <Button type="submit" disabled={loading} className="flex-1">
+            <div className="flex items-center gap-3 pt-2">
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="flex-1 bg-black hover:bg-slate-900 text-white"
+              >
                 {loading ? (
                   <>
                     <Spinner size={15} /> Creating…
@@ -226,13 +242,14 @@ export default function NewCandidatePage() {
                 variant="outline"
                 onClick={() => navigate("/")}
                 disabled={loading}
+                className="border-slate-200 hover:bg-slate-50"
               >
                 Cancel
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </Layout>
   );
 }

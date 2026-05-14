@@ -119,7 +119,7 @@ export default function CandidateListPage() {
           )}
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={() => navigate("/candidates/new")} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700">
+          <Button size="sm" onClick={() => navigate("/candidates/new")} className="gap-1.5 bg-black hover:bg-slate-900 text-white">
             <Plus size={14} /> New Candidate
           </Button>
         )}

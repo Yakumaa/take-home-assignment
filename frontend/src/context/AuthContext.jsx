@@ -1,58 +1,74 @@
-import React, { createContext, useState, useEffect } from 'react';
+/**
+ * context/AuthContext.jsx
+ *
+ * Provides { user, token, login, logout } to the entire app.
+ *
+ * The JWT payload is decoded client-side (no jwt-decode library needed —
+ * we just base64-decode the middle segment). The role embedded in the
+ * token was set server-side at login and is read-only here.
+ */
 
-export const AuthContext = createContext();
+import { createContext, useContext, useState, useCallback } from "react";
+import * as api from "@/api/client";
+
+const AuthContext = createContext(null);
+
+function decodeJwt(token) {
+  try {
+    const payload = token.split(".")[1];
+    // Base64url → Base64 → JSON
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function getStoredUser() {
+  const token = localStorage.getItem("access_token");
+  if (!token) return { token: null, user: null };
+  const payload = decodeJwt(token);
+  if (!payload || payload.exp * 1000 < Date.now()) {
+    localStorage.removeItem("access_token");
+    return { token: null, user: null };
+  }
+  return {
+    token,
+    user: { id: Number(payload.sub), role: payload.role },
+  };
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const initial = getStoredUser();
+  const [token, setToken] = useState(initial.token);
+  const [user, setUser] = useState(initial.user);
 
-  // Initialize from localStorage on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('auth_user');
-
-    if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-      }
-    }
-    setLoading(false);
+  const login = useCallback(async (email, password) => {
+    const res = await api.login(email, password);
+    const { access_token } = res.data;
+    localStorage.setItem("access_token", access_token);
+    const payload = decodeJwt(access_token);
+    setToken(access_token);
+    setUser({ id: Number(payload.sub), role: payload.role });
+    return payload.role;
   }, []);
 
-  const login = (userData, authToken) => {
-    setUser(userData);
-    setToken(authToken);
-    localStorage.setItem('auth_token', authToken);
-    localStorage.setItem('auth_user', JSON.stringify(userData));
-  };
-
-  const logout = () => {
-    setUser(null);
+  const logout = useCallback(() => {
+    localStorage.removeItem("access_token");
     setToken(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-  };
-
-  const value = {
-    user,
-    token,
-    loading,
-    login,
-    logout,
-    isAuthenticated: !!token,
-    isAdmin: user?.role === 'admin',
-    isReviewer: user?.role === 'reviewer',
-  };
+    setUser(null);
+  }, []);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }

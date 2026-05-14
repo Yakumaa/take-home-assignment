@@ -1,78 +1,74 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, AuthContext } from './context/AuthContext';
-import { useAuth } from './hooks/useAuth';
-import { Layout } from './components/Layout';
-import { LoginPage } from './pages/LoginPage';
-import { CandidateListPage } from './pages/CandidateListPage';
-import { CandidateDetailPage } from './pages/CandidateDetailPage';
+/**
+ * App.jsx — Router + AuthProvider root.
+ *
+ * Route structure:
+ *   /login              → LoginPage          (public)
+ *   /register           → RegistrationPage   (public)
+ *   /                   → CandidateListPage  (protected: any authenticated user)
+ *   /candidates/:id     → CandidateDetailPage(protected: any authenticated user)
+ *   /candidates/new     → NewCandidatePage   (admin only — AdminRoute guard)
+ *   *                   → redirect to /
+ *
+ * AdminRoute is defined here (not a separate file) since it's a single
+ * Outlet wrapper — same pattern as ProtectedRoute.
+ */
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-// Protected Route Component
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+import LoginPage from "@/pages/LoginPage";
+import RegistrationPage from "@/pages/RegistrationPage";
+import CandidateListPage from "@/pages/CandidateListPage";
+import CandidateDetailPage from "@/pages/CandidateDetailPage";
+import NewCandidatePage from "@/pages/NewCandidatePage";
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{ width: '2rem', height: '2rem', marginBottom: '1rem' }}></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
+/**
+ * AdminRoute — layout route that sits inside ProtectedRoute.
+ *
+ * ProtectedRoute already guarantees a valid JWT exists, so here we only
+ * need to check the role. Non-admins are silently redirected to the list
+ * page rather than shown an error, which avoids leaking that the route
+ * exists at all.
+ *
+ * role values are lowercase strings set by the backend: "admin" | "reviewer"
+ */
+function AdminRoute() {
+  const { user } = useAuth();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  // ProtectedRoute parent already handles the unauthenticated case,
+  // but we guard defensively here too.
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== "admin") return <Navigate to="/" replace />;
 
-  return <Layout>{children}</Layout>;
-}
-
-// Main App Component
-function AppRoutes() {
-  const { isAuthenticated } = useAuth();
-
-  return (
-    <Routes>
-      {/* Login Route */}
-      <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate to="/candidates" replace /> : <LoginPage />}
-      />
-
-      {/* Protected Routes */}
-      <Route
-        path="/candidates"
-        element={
-          <ProtectedRoute>
-            <CandidateListPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/candidates/:id"
-        element={
-          <ProtectedRoute>
-            <CandidateDetailPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Fallback */}
-      <Route path="/" element={<Navigate to="/candidates" replace />} />
-      <Route path="*" element={<Navigate to="/candidates" replace />} />
-    </Routes>
-  );
+  return <Outlet />;
 }
 
 export default function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </Router>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+
+          {/* ── Public routes ──────────────────────────────────────────── */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegistrationPage />} />
+
+          {/* ── Authenticated routes (any valid JWT) ───────────────────── */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<CandidateListPage />} />
+            <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+
+            {/* ── Admin-only routes ─────────────────────────────────────── */}
+            <Route element={<AdminRoute />}>
+              <Route path="/candidates/new" element={<NewCandidatePage />} />
+            </Route>
+          </Route>
+
+          {/* ── Catch-all → home ───────────────────────────────────────── */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

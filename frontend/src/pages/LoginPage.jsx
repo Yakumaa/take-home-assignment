@@ -1,110 +1,106 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { authAPI } from '../api';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Loader2 } from 'lucide-react';
+/**
+ * pages/LoginPage.jsx
+ * Clean, minimal login form. Redirects to / on success.
+ */
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/primitives";
+import { Spinner } from "@/components/StatusBadge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
-
     try {
-      const response = await authAPI.login(email, password);
-      const { user, access_token } = response.data;
-
-      login(user, access_token);
-      navigate('/candidates');
+      await login(email, password);
+      navigate("/", { replace: true });
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || 'Login failed. Please try again.';
-      setError(errorMsg);
+      setError(
+        err.response?.data?.detail ?? "Login failed. Check your credentials."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/30">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl">TechKraft</CardTitle>
-          <CardDescription>Candidate Scoring Platform</CardDescription>
-        </CardHeader>
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+      <div className="w-full max-w-sm space-y-4">
+        {/* Wordmark */}
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            TechKraft Inc.
+          </p>
+          <h1 className="mt-1 text-xl font-semibold">Recruitment Dashboard</h1>
+        </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>Sign in</CardTitle>
+            <CardDescription>Use your reviewer or admin credentials.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@techkraft.com"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-            )}
 
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@techkraft.com"
-                required
-                disabled={loading}
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
+              {error && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {error}
+                </p>
               )}
-            </Button>
-          </form>
 
-          <div className="mt-6 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground">Demo Credentials:</p>
-            <div className="space-y-2 text-xs">
-              <div>
-                <span className="font-semibold">Admin:</span> admin@techkraft.com / password
-              </div>
-              <div>
-                <span className="font-semibold">Reviewer:</span> reviewer@techkraft.com / password
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <><Spinner size={15} /> Signing in…</>
+                ) : (
+                  "Sign in"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-muted-foreground">
+          New accounts are assigned the reviewer role. Contact an admin for elevated access.
+        </p>
+      </div>
     </div>
   );
 }
